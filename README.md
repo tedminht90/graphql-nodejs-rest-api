@@ -45,7 +45,7 @@ Simple REST API backend built with Node.js, Express.js using MVC architecture pa
 
 4. **Verify the server is running**
    ```bash
-   curl http://localhost:3001/health
+   curl http://localhost:3000/health
    ```
 
 Expected response:
@@ -71,7 +71,7 @@ Expected response:
 2. **Run the container**
 
    ```bash
-   docker run -d -p 3001:3001 --name my-api nodejs-rest-api
+   docker run -d -p 3000:3000 --name my-api nodejs-rest-api
    ```
 
 3. **View logs**
@@ -103,7 +103,7 @@ Expected response:
 ### Base URL
 
 ```
-http://localhost:3001
+http://localhost:3000
 ```
 
 ### Health Check
@@ -129,19 +129,25 @@ GET /health
 #### Get all users
 
 ```bash
-curl http://localhost:3001/api/users
+curl http://localhost:3000/api/users
 ```
 
 #### Get user by ID
 
 ```bash
-curl http://localhost:3001/api/users/uid/1
+curl http://localhost:3000/api/users/uid/1
+```
+
+#### Get user by Email
+
+```bash
+curl http://localhost:3000/api/users/email/nguyenvana@email.com
 ```
 
 #### Search users (Recommended for production)
 
 ```bash
-curl -X POST http://localhost:3001/api/users/search \
+curl -X POST http://localhost:3000/api/users/search \
   -H "Content-Type: application/json" \
   -d '{
     "email": "nguyenvana@email.com"
@@ -151,7 +157,7 @@ curl -X POST http://localhost:3001/api/users/search \
 #### Advanced GraphQL-style query
 
 ```bash
-curl -X POST http://localhost:3001/api/users/query \
+curl -X POST http://localhost:3000/api/users/query \
   -H "Content-Type: application/json" \
   -d '{
     "where": {
@@ -167,7 +173,7 @@ curl -X POST http://localhost:3001/api/users/query \
 #### Create new user
 
 ```bash
-curl -X POST http://localhost:3001/api/users \
+curl -X POST http://localhost:3000/api/users \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Nguyễn Văn A",
@@ -179,7 +185,7 @@ curl -X POST http://localhost:3001/api/users \
 #### Update user
 
 ```bash
-curl -X PUT http://localhost:3001/api/users/uid/1 \
+curl -X PUT http://localhost:3000/api/users/uid/1 \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Nguyễn Văn A - Updated",
@@ -190,7 +196,7 @@ curl -X PUT http://localhost:3001/api/users/uid/1 \
 #### Delete user
 
 ```bash
-curl -X DELETE http://localhost:3001/api/users/uid/1
+curl -X DELETE http://localhost:3000/api/users/uid/1
 ```
 
 ## 📝 Response Format
@@ -238,6 +244,7 @@ nodejs-rest-api/
 ├── Dockerfile                 # Docker configuration
 ├── docker-compose.yml         # Docker Compose setup
 ├── .dockerignore              # Docker ignore rules
+├── healthcheck.js             # Health check script
 ├── package.json               # Dependencies
 └── README.md                  # Documentation
 ```
@@ -248,7 +255,7 @@ Create a `.env` file in the root directory:
 
 ```env
 NODE_ENV=production
-PORT=3001
+PORT=3000
 ```
 
 ## 🔍 Advanced Query API (GraphQL-style)
@@ -286,7 +293,7 @@ The `/api/users/query` endpoint provides powerful, flexible querying capabilitie
 #### 1. Find users by email domain
 
 ```bash
-curl -X POST http://localhost:3001/api/users/query \
+curl -X POST http://localhost:3000/api/users/query \
   -H "Content-Type: application/json" \
   -d '{
     "where": {
@@ -298,7 +305,7 @@ curl -X POST http://localhost:3001/api/users/query \
 #### 2. Age range query with specific fields
 
 ```bash
-curl -X POST http://localhost:3001/api/users/query \
+curl -X POST http://localhost:3000/api/users/query \
   -H "Content-Type: application/json" \
   -d '{
     "where": {
@@ -312,7 +319,7 @@ curl -X POST http://localhost:3001/api/users/query \
 #### 3. Complex multi-condition query
 
 ```bash
-curl -X POST http://localhost:3001/api/users/query \
+curl -X POST http://localhost:3000/api/users/query \
   -H "Content-Type: application/json" \
   -d '{
     "where": {
@@ -328,7 +335,7 @@ curl -X POST http://localhost:3001/api/users/query \
 #### 4. Get youngest user
 
 ```bash
-curl -X POST http://localhost:3001/api/users/query \
+curl -X POST http://localhost:3000/api/users/query \
   -H "Content-Type: application/json" \
   -d '{
     "sort": { "field": "age", "direction": "asc" },
@@ -339,7 +346,7 @@ curl -X POST http://localhost:3001/api/users/query \
 #### 5. Search with pagination
 
 ```bash
-curl -X POST http://localhost:3001/api/users/query \
+curl -X POST http://localhost:3000/api/users/query \
   -H "Content-Type: application/json" \
   -d '{
     "select": ["id", "name"],
@@ -420,21 +427,21 @@ test_api.bat
 
 ```bash
 # Health check
-curl http://localhost:3001/health
+curl http://localhost:3000/health
 
 # CRUD operations
-curl http://localhost:3001/api/users
-curl http://localhost:3001/api/users/uid/1
-#curl http://localhost:3001/api/users/email/test@test.com
+curl http://localhost:3000/api/users
+curl http://localhost:3000/api/users/uid/1
+curl http://localhost:3000/api/users/email/test@test.com
 
 # Search operations
-curl -X POST http://localhost:3001/api/users/search -H "Content-Type: application/json" -d '{"email":"test@test.com"}'
-curl -X POST http://localhost:3001/api/users/query -H "Content-Type: application/json" -d '{"where":{"age":{"gt":25}},"limit":3}'
+curl -X POST http://localhost:3000/api/users/search -H "Content-Type: application/json" -d '{"email":"test@test.com"}'
+curl -X POST http://localhost:3000/api/users/query -H "Content-Type: application/json" -d '{"where":{"age":{"gt":25}},"limit":3}'
 
 # Create, Update, Delete
-curl -X POST http://localhost:3001/api/users -H "Content-Type: application/json" -d '{"name":"Test User","email":"test@test.com","age":25}'
-curl -X PUT http://localhost:3001/api/users/uid/4 -H "Content-Type: application/json" -d '{"name":"Updated User"}'
-curl -X DELETE http://localhost:3001/api/users/uid/4
+curl -X POST http://localhost:3000/api/users -H "Content-Type: application/json" -d '{"name":"Test User","email":"test@test.com","age":25}'
+curl -X PUT http://localhost:3000/api/users/uid/4 -H "Content-Type: application/json" -d '{"name":"Updated User"}'
+curl -X DELETE http://localhost:3000/api/users/uid/4
 ```
 
 ## 🔍 Validation Rules
@@ -473,7 +480,7 @@ The API handles various error scenarios:
 ### Health Check
 
 ```bash
-curl http://localhost:3001/health
+curl http://localhost:3000/health
 ```
 
 ### Docker Container Health
@@ -495,10 +502,11 @@ htop
 
 ## 🔒 Security
 
-- Input validation and sanitization
-- Error message standardization
-- Non-root user in Docker container
-- Resource limits in production
+- **Vietnamese name sorting**: Smart multi-level comparison for Vietnamese names
+- **Input validation and sanitization**: Comprehensive data validation
+- **Error message standardization**: Consistent API responses
+- **Non-root user in Docker container**: Security best practices
+- **Resource limits in production**: Performance optimization
 
 ## 🎯 Production Deployment
 
@@ -506,13 +514,13 @@ htop
 
 ```bash
 docker build -t nodejs-rest-api:prod .
-docker run -d -p 3001:3001 --restart unless-stopped --name api-prod nodejs-rest-api:prod
+docker run -d -p 3000:3000 --restart unless-stopped --name api-prod nodejs-rest-api:prod
 ```
 
 ### Option 2: Docker Compose
 
 ```bash
-docker-compose -f docker-compose.production.yml up -d
+docker-compose -f docker-compose.yml up -d
 ```
 
 ### Option 3: Cloud Deployment
@@ -539,12 +547,12 @@ npm start
 docker build -t nodejs-rest-api .
 
 # Docker run
-docker run -p 3001:3001 nodejs-rest-api
+docker run -p 3000:3000 nodejs-rest-api
 
 # Docker Compose
-docker-compose -f docker-compose.production.yml up -d
-docker-compose -f docker-compose.production.yml logs -f api
-docker-compose -f docker-compose.production.yml down
+docker-compose up -d
+docker-compose logs -f api
+docker-compose down
 ```
 
 ## 🔧 Troubleshooting
@@ -554,9 +562,9 @@ docker-compose -f docker-compose.production.yml down
 1. **Port already in use**
 
    ```bash
-   # Check what's using port 3001
-   netstat -ano | findstr :3001  # Windows
-   lsof -i :3001                 # Mac/Linux
+   # Check what's using port 3000
+   netstat -ano | findstr :3000  # Windows
+   lsof -i :3000                 # Mac/Linux
 
    # Use different port
    PORT=3001 npm run dev
@@ -576,10 +584,10 @@ docker-compose -f docker-compose.production.yml down
 
    ```bash
    # Verify server is running
-   curl http://localhost:3001/health
+   curl http://localhost:3000/health
 
    # Check correct endpoint
-   curl http://localhost:3001/api/users
+   curl http://localhost:3000/api/users
    ```
 
 ### Debug Mode
@@ -594,6 +602,30 @@ app.use((req, res, next) => {
 });
 ```
 
+## 📚 API Documentation
+
+### Swagger/OpenAPI Documentation
+
+The API includes comprehensive Swagger documentation available at:
+
+- **Development**: http://localhost:3001/api-docs
+- **Production**: https://your-domain.com/api-docs
+
+#### Features:
+
+- **Interactive API testing**: Try endpoints directly from the documentation
+- **Schema validation**: Complete request/response schemas
+- **Vietnamese name sorting**: Detailed documentation of the intelligent sorting algorithm
+- **Examples**: Multiple request examples for each endpoint
+- **Error handling**: Comprehensive error response documentation
+
+#### Quick Access:
+
+```bash
+# Start server and open docs
+npm run dev
+npm run docs
+
 ## 📞 Support
 
 If you encounter any issues:
@@ -606,3 +638,4 @@ If you encounter any issues:
 ## 📄 License
 
 MIT License
+```
