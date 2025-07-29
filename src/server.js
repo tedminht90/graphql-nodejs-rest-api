@@ -21,7 +21,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// THÊM SWAGGER MIDDLEWARE - QUAN TRỌNG
+// THÊM SWAGGER MIDDLEWARE
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
   explorer: true,
   customCss: '.swagger-ui .topbar { display: none }',
@@ -37,7 +37,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Redirect root to API docs - THÊM DÒng NÀY
+// Redirect root to API docs
 app.get('/', (req, res) => {
   res.redirect('/api-docs');
 });

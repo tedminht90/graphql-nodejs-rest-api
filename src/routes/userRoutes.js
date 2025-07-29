@@ -28,7 +28,7 @@ const UserController = require('../controllers/userController');
  *                   example: true
  *                 message:
  *                   type: string
- *                   example: Lấy danh sách users thành công
+ *                   example: Get all users successfully
  *                 data:
  *                   type: array
  *                   items:
@@ -153,6 +153,12 @@ router.post('/', UserController.createUser);
  *                     $ref: '#/components/schemas/User'
  *                 total:
  *                   type: integer
+ *       404:
+ *         description: No user found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NoDataFoundResponse'
  *       400:
  *         $ref: '#/components/responses/BadRequest'
  *       500:

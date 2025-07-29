@@ -12,10 +12,6 @@ const options = {
         name: 'API Support',
         email: 'support@example.com',
       },
-      license: {
-        name: 'MIT',
-        url: 'https://opensource.org/licenses/MIT',
-      },
     },
     servers: [
       {
@@ -35,20 +31,23 @@ const options = {
           properties: {
             id: {
               type: 'integer',
+              format: 'int64',
               description: 'Auto-generated unique identifier',
               example: 1,
+              readOnly: true // Chỉ đọc, không input
             },
             name: {
               type: 'string',
               description: 'Full name in Vietnamese format',
               minLength: 2,
+              maxLength: 100,
               example: 'Nguyễn Văn A',
             },
             email: {
               type: 'string',
               format: 'email',
               description: 'Unique email address',
-              example: 'nguyenvana@email.com',
+              example: 'user@example.com',
             },
             age: {
               type: 'integer',
@@ -243,12 +242,34 @@ const options = {
             },
             message: {
               type: 'string',
-              example: 'Server đang hoạt động',
+              example: 'Server is running',
             },
             timestamp: {
               type: 'string',
               format: 'date-time',
               example: '2025-07-28T02:00:00.000Z',
+            },
+          },
+        },
+        NoDataFoundResponse: {
+          type: 'object',
+          properties: {
+            success: {
+              type: 'boolean',
+              example: false,
+            },
+            message: {
+              type: 'string',
+              example: 'Cannot find any data',
+            },
+            searchCriteria: {
+              type: 'object',
+              example: { email: 'notfound@email.com' }
+            },
+            suggestions: {
+              type: 'array',
+              items: { type: 'string' },
+              example: ['Check if the email is correct']
             },
           },
         },
@@ -289,7 +310,7 @@ const options = {
       },
     },
   },
-  apis: ['./src/routes/*.js', './src/controllers/*.js'], // Paths to files containing OpenAPI definitions
+  apis: ['./src/routes/*.js'], // Paths to files containing OpenAPI definitions
 };
 
 const specs = swaggerJsdoc(options);

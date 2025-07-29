@@ -5,17 +5,28 @@ class UserController {
   static getAllUsers(req, res) {
     try {
       const users = User.getAll();
-      
+
+      // Kiểm tra nếu không có users
+      if (!users || users.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Cannot find any users',
+          data: [],
+          total: 0
+        });
+      }
+
+      // Trả về danh sách users
       res.status(200).json({
         success: true,
-        message: 'Lấy danh sách users thành công',
+        message: 'Get users list successfully',
         data: users,
         total: users.length
       });
     } catch (error) {
       res.status(500).json({
         success: false,
-        message: 'Lỗi server',
+        message: 'Error server',
         error: error.message
       });
     }
@@ -30,19 +41,19 @@ class UserController {
       if (!user) {
         return res.status(404).json({
           success: false,
-          message: 'Không tìm thấy user'
+          message: 'Cannot find user with this ID',
         });
       }
       
       res.status(200).json({
         success: true,
-        message: 'Lấy thông tin user thành công',
+        message: 'Get user information successfully',
         data: user
       });
     } catch (error) {
       res.status(500).json({
         success: false,
-        message: 'Lỗi server',
+        message: 'Error server',
         error: error.message
       });
     }
@@ -56,7 +67,7 @@ class UserController {
       if (!email && !name && !age) {
         return res.status(400).json({
           success: false,
-          message: 'Vui lòng cung cấp ít nhất một tiêu chí tìm kiếm'
+          message: 'Please provide at least one search criteria (email, name, age)'
         });
       }
       
@@ -77,16 +88,31 @@ class UserController {
         users = users.filter(user => user.age === age);
       }
 
+      // Kiểm tra kết quả tìm kiếm
+      if (!users || users.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Cannot find any users matching the search criteria',
+          searchCriteria: { email, name, age },
+          suggestions: [
+            'Check if the email is correct',
+            'Try searching with a non-accented name',
+            'Check if the age is accurate'
+          ]
+        });
+      }
+
       res.status(200).json({
         success: true,
-        message: 'Tìm kiếm users thành công',
+        message: 'Find users successful',
         data: users,
-        total: users.length
+        total: users.length,
+        searchCriteria: { email, name, age }
       });
     } catch (error) {
       res.status(500).json({
         success: false,
-        message: 'Lỗi server',
+        message: 'Error server during search',
         error: error.message
       }); 
     }
@@ -260,6 +286,21 @@ class UserController {
       // Nếu limit không phải là số, sẽ mặc định là 10
       users = users.slice(0, parseInt(limit));
 
+      // Kiểm tra kết quả sau khi filter
+      if (!users || users.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy users nào phù hợp với query',
+          query: { where, select, limit, sort },
+          suggestions: [
+            'Thử mở rộng điều kiện tìm kiếm',
+            'Kiểm tra lại các operators (gt, lt, equals, contains)',
+            'Thử tăng limit value',
+            'Kiểm tra dữ liệu có tồn tại trong hệ thống'
+          ]
+        });
+      }
+
       // Apply SELECT (only return specified fields)
       if (select && Array.isArray(select)) {
         // map() tạo một array mới bằng cách transform từng element
@@ -290,13 +331,14 @@ class UserController {
         success: true,
         message: 'Query successful',
         data: users,
-        total: users.length
+        total: users.length,
+        query: { where, select, limit, sort }
       });
 
     } catch (error) {
       res.status(500).json({
         success: false,
-        message: 'Error server',
+        message: 'Error server during query',
         error: error.message
       });
     }
@@ -324,9 +366,9 @@ class UserController {
           message: 'Email used by another user'
         });
       }
-      
+
       const newUser = User.create(userData);
-      
+
       res.status(201).json({
         success: true,
         message: 'Create user successful',
