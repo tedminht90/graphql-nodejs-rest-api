@@ -1,126 +1,171 @@
-// Mock database - trong thực tế sẽ là MongoDB, PostgreSQL, etc.
-let users = [
-  { id: 1, name: 'Trần Vân Anh', email: 'nguyenvana@gmail.com', age: 25 },
-  { id: 2, name: 'Trần Linh Anh', email: 'tranthib@yahoo.com', age: 30 },
-  { id: 3, name: 'Trần Thị An', email: 'levanc@gmail.com', age: 28 },
-  { id: 4, name: 'Nguyễn Minh Anh', email: 'phamthid@hotmail.com', age: 22 },
-  { id: 5, name: 'Trần Linh Bình', email: 'hoangvane@gmail.com', age: 35 },
-  { id: 6, name: 'Trần Vân Ánh', email: 'nguyenvana@gmail.com', age: 25 },
-  { id: 7, name: 'Tạ Ngọc Linh An', email: 'hoangvane@gmail.com', age: 7 }
-];
+const pool = require('../config/db');
 
-let nextId = 8;
+// Chuyển sang Cursor-based Pagination
+const getUsers = async (cursor = 0, limit = 20) => {
+    // Truy vấn các bản ghi có ID lớn hơn cursor
+    const query = `
+        SELECT 
+            id, name, email, 
+            created_at AT TIME ZONE 'Asia/Ho_Chi_Minh' as created_at, 
+            updated_at AT TIME ZONE 'Asia/Ho_Chi_Minh' as updated_at
+        FROM test_nodejs.users 
+        WHERE id > $1 
+        ORDER BY id ASC 
+        LIMIT $2
+    `;
+    
+    const result = await pool.query(query, [cursor, limit]);
+    const data = result.rows;
 
-class User {
-  // Lấy tất cả users
-  static getAll() {
-    return users;
-  }
+    // Xác định con trỏ cho trang tiếp theo
+    const nextCursor = data.length === limit ? data[data.length - 1].id : null;
 
-  // Lấy user theo ID
-  static getById(id) {
-    return users.find(user => user.id === parseInt(id));
-  }
-
-  // Lấy user theo email
-  static getByEmail(email) {
-    return users.find(user => user.email === email);
-  }
-
-  // Tạo user mới
-  static create(userData) {
-    const newUser = {
-      id: nextId++,
-      name: userData.name,
-      email: userData.email,
-      age: parseInt(userData.age)
+    return {
+        data,
+        nextCursor
     };
-    
-    users.push(newUser);
-    return newUser;
-  }
+};
 
-  // Cập nhật user
-  static update(id, userData) {
-    const userIndex = users.findIndex(user => user.id === parseInt(id));
-    
-    if (userIndex === -1) {
-      return null;
+const getUserById = async (id) => {
+    console.log('getUserById called with id:', id);
+    const client = await pool.connect();
+    try {
+        const result = await client.query('SELECT * FROM test_nodejs.users WHERE id = $1', [id]);
+        console.log('Query result:', result.rows[0]);
+        return result.rows[0];
+    } finally {
+        client.release();
     }
+};
 
-    // Cập nhật chỉ các field được cung cấp
-    if (userData.name !== undefined) {
-      users[userIndex].name = userData.name;
-    }
-    if (userData.email !== undefined) {
-      users[userIndex].email = userData.email;
-    }
-    if (userData.age !== undefined) {
-      users[userIndex].age = parseInt(userData.age);
-    }
-
-    return users[userIndex];
-  }
-
-  // Xóa user
-  static delete(id) {
-    const userIndex = users.findIndex(user => user.id === parseInt(id));
-    
-    if (userIndex === -1) {
-      return null;
-    }
-
-    const deletedUser = users.splice(userIndex, 1)[0];
-    return deletedUser;
-  }
-
-  // Validation methods
-  static validateUserData(userData, isUpdate = false) {
-    const errors = [];
-
-    // Kiểm tra required fields (chỉ khi tạo mới)
-    if (!isUpdate) {
-      if (!userData.name || userData.name.trim() === '') {
-        errors.push('Tên không được để trống');
-      }
-      if (!userData.email || userData.email.trim() === '') {
-        errors.push('Email không được để trống');
-      }
-      if (!userData.age) {
-        errors.push('Tuổi không được để trống');
-      }
-    }
-
-    // Validate email format
-    if (userData.email) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(userData.email)) {
-        errors.push('Email không đúng định dạng');
-      }
-    }
-
-    // Validate age
-    if (userData.age) {
-      const age = parseInt(userData.age);
-      if (isNaN(age) || age < 1 || age > 150) {
-        errors.push('Tuổi phải là số từ 1 đến 150');
-      }
-    }
-
-    // Validate name length
-    if (userData.name && userData.name.trim().length < 2) {
-      errors.push('Tên phải có ít nhất 2 ký tự');
-    }
-
-    return errors;
-  }
-
-  // Kiểm tra email đã tồn tại (trừ user hiện tại khi update)
-  static isEmailExists(email, excludeId = null) {
-    return users.some(user => 
-      user.email === email && (excludeId === null || user.id !== parseInt(excludeId))
+const createUser = async (user) => {
+    const { name, email } = user;
+    const result = await pool.query(
+        'INSERT INTO test_nodejs.users (name, email) VALUES ($1, $2) RETURNING *',
+        [name, email]
     );
-  }
-}
+    return result.rows[0];
+};
 
-module.exports = User;
+const updateUser = async (id, user) => {
+    const { name, email } = user;
+    const result = await pool.query(
+        'UPDATE test_nodejs.users SET name = $1, email = $2 WHERE id = $3 RETURNING *',
+        [name, email, id]
+    );
+    return result.rows[0];
+};
+
+const deleteUser = async (id) => {
+    const result = await pool.query('DELETE FROM test_nodejs.users WHERE id = $1 RETURNING *', [id]);
+    return result.rows[0];
+};
+
+const searchUsers = async (criteria) => {
+    let query = `
+        SELECT 
+            id, name, email, 
+            created_at AT TIME ZONE 'Asia/Ho_Chi_Minh' as created_at, 
+            updated_at AT TIME ZONE 'Asia/Ho_Chi_Minh' as updated_at
+        FROM test_nodejs.users 
+    `;
+    const conditions = [];
+    const values = [];
+    let paramIndex = 1;
+
+    if (criteria.email) {
+        conditions.push(`email = $${paramIndex++}`);
+        values.push(criteria.email);
+    }
+
+    if (criteria.name) {
+        conditions.push(`name ILIKE $${paramIndex++}`);
+        values.push(`%${criteria.name}%`);
+    }
+
+    if (conditions.length > 0) {
+        query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    query += ' ORDER BY id ASC';
+
+    const result = await pool.query(query, values);
+    return result.rows;
+};
+
+// Thêm hàm queryUsers
+const queryUsers = async (params) => {
+    const { where, select, sort, limit, offset } = params;
+
+    // 1. Xử lý phần SELECT
+    let selectClause = '*';
+    if (select && select.length > 0) {
+        // Lọc để chỉ cho phép các cột hợp lệ, tránh SQL Injection
+        const allowedColumns = ['id', 'name', 'email', 'created_at', 'updated_at'];
+        const filteredSelect = select.filter(field => allowedColumns.includes(field));
+        if (filteredSelect.length > 0) {
+            selectClause = filteredSelect.join(', ');
+        }
+    }
+
+    let query = `SELECT ${selectClause} FROM test_nodejs.users`;
+    const values = [];
+    const conditions = [];
+    let paramIndex = 1;
+
+    // 2. Xử lý phần WHERE
+    if (where) {
+        Object.keys(where).forEach(field => {
+            const operator = Object.keys(where[field])[0];
+            const value = where[field][operator];
+            
+            const operatorMap = {
+                equals: '=',
+                contains: 'ILIKE',
+                gt: '>',
+                lt: '<'
+            };
+
+            if (operatorMap[operator]) {
+                conditions.push(`${field} ${operatorMap[operator]} $${paramIndex++}`);
+                values.push(operator === 'contains' ? `%${value}%` : value);
+            }
+        });
+    }
+
+    if (conditions.length > 0) {
+        query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    // 3. Xử lý phần SORT
+    if (sort && sort.field) {
+        const direction = sort.direction && sort.direction.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+        query += ` ORDER BY ${sort.field} ${direction}`;
+    } else {
+        query += ' ORDER BY id ASC'; // Mặc định sắp xếp theo ID
+    }
+
+    // 4. Xử lý phần LIMIT và OFFSET (phân trang)
+    if (limit) {
+        query += ` LIMIT $${paramIndex++}`;
+        values.push(limit);
+    }
+    if (offset) {
+        query += ` OFFSET $${paramIndex++}`;
+        values.push(offset);
+    }
+
+    const result = await pool.query(query, values);
+    return result.rows;
+};
+
+
+module.exports = {
+    getUsers,
+    getUserById,
+    createUser,
+    updateUser,
+    deleteUser,
+    searchUsers,
+    queryUsers, // Đã thêm
+};

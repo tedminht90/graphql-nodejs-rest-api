@@ -4,6 +4,10 @@ const notFoundHandler = (req, res, next) => {
     success: false,
     message: `Cannot find the endpoint: ${req.method} ${req.path}`,
     availableEndpoints: {
+      graphql: {
+        'GET /graphql': 'GraphQL IDE interface',
+        'POST /graphql': 'GraphQL API endpoint'
+      },
       users: {
         'GET /api/users': 'Get all users',
         'GET /api/users/uid/:id': 'Get user by ID',

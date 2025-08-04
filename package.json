@@ -1,34 +1,41 @@
 {
   "name": "nodejs-rest-api",
   "version": "1.0.0",
-  "main": "src/server.js",
+  "description": "Simple REST API backend built with Node.js, Express.js using MVC architecture pattern.",
+  "main": "index.js",
   "directories": {
     "test": "tests"
   },
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "docs": "echo 'API Documentation available at http://localhost:3001/api-docs'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [
-    "nodejs",
-    "express",
-    "rest-api"
-  ],
-  "author": "Tri Ta",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tedminht90/graphql-nodejs-rest-api.git"
+  },
+  "keywords": [],
+  "author": "",
   "license": "ISC",
-  "description": "",
+  "bugs": {
+    "url": "https://github.com/tedminht90/graphql-nodejs-rest-api/issues"
+  },
+  "homepage": "https://github.com/tedminht90/graphql-nodejs-rest-api#readme",
   "dependencies": {
+    "@faker-js/faker": "^9.9.0",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "graphql": "^16.11.0",
+    "graphql-http": "^1.22.4",
+    "pg": "^8.16.3",
+    "pg-copy-streams": "^7.0.0",
+    "ruru": "^2.0.0-beta.29",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
-    "@types/swagger-jsdoc": "^6.0.4",
-    "@types/swagger-ui-express": "^4.1.8",
     "nodemon": "^3.1.10"
   }
 }

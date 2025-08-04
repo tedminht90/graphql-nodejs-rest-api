@@ -1,35 +1,39 @@
-# Sử dụng Node.js official image
-FROM node:alpine
+# STAGE 1: Builder - Sử dụng image Node.js đầy đủ để cài đặt dependencies
+FROM node:lts AS builder
 
-# Đặt thông tin maintainer
-LABEL maintainer="your-email@example.com"
-LABEL description="Node.js REST API Backend"
-
-# Tạo directory cho app
 WORKDIR /usr/src/app
 
-# Copy package.json và package-lock.json trước để tối ưu Docker cache
+# Copy package files
 COPY package*.json ./
 
-# Cài đặt dependencies
-RUN npm ci --only=production && npm cache clean --force
+# Cài đặt tất cả dependencies, bao gồm cả devDependencies để build native addons
+RUN npm ci
+
+# Copy toàn bộ source code
+COPY . .
+
+# STAGE 2: Production - Sử dụng image Alpine siêu nhẹ cho image cuối cùng
+FROM node:alpine
+
+WORKDIR /usr/src/app
+
+# Copy package.json để npm có thể chạy các script như "start"
+COPY package*.json ./
+
+# Chỉ copy thư mục node_modules đã được build hoàn chỉnh từ stage builder
+COPY --from=builder /usr/src/app/node_modules ./node_modules
+
+# Chỉ copy source code của ứng dụng từ stage builder
+COPY --from=builder /usr/src/app/src ./src
 
 # Tạo user non-root để chạy app (security best practice)
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
-
-# Copy source code
-COPY --chown=nodejs:nodejs . .
+RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
 
 # Chuyển sang user nodejs
 USER nodejs
 
-# Expose port
-EXPOSE 3000
-
-# Health check
-# HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-#   CMD node healthcheck.js
+# Expose port mà ứng dụng đang lắng nghe (3001)
+EXPOSE 3001
 
 # Chạy ứng dụng
 CMD ["npm", "start"]

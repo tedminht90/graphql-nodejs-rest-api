@@ -438,3 +438,6 @@ pnpm-lock.yaml
 
 # Windows thumbnail cache
 Thumbs.db
+
+# ===== HTML FILES =====
+*.html
