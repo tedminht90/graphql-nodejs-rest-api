@@ -190,7 +190,7 @@ type Query {
   hello: String # Test connection
   user(id: ID!): User # Get user by ID
   users(cursor: ID, limit: Int): [User] # Get users (paginated)
-  searchUsers(email: String, name: String): [User] # Search users
+  searchUsers(email: String, name: String, cursor: ID, limit: Int): SearchUsersResult # Search users with pagination
 }
 ```
 
@@ -214,6 +214,28 @@ type User {
   created_at: String # Creation timestamp
   updated_at: String # Last update timestamp
 }
+```
+
+#### **SearchUsersResult Type**
+
+```graphql
+type SearchUsersResult {
+  data: [User] # Array of users found
+  nextCursor: ID # Cursor for next page (null if no more data)
+  hasMore: Boolean # Whether there are more results
+}
+```
+
+**🚨 Important: SearchUsersResult Structure**
+
+When using `searchUsers`, you must query the `data` field to get the actual users:
+
+```graphql
+# ❌ Wrong - This will cause an error
+{ searchUsers(email: "gmail.com") { id name email } }
+
+# ✅ Correct - Query the data field
+{ searchUsers(email: "gmail.com") { data { id name email } nextCursor hasMore } }
 ```
 
 ### 🎮 **GraphQL Examples**
@@ -261,14 +283,49 @@ type User {
 }
 ```
 
-#### **4. Search Users**
+#### **4. Search Users (with Cursor-based Pagination)**
 
 ```graphql
+# Search first page (20 users with gmail)
 {
-  searchUsers(email: "gmail.com") {
-    id
-    name
-    email
+  searchUsers(email: "gmail.com", limit: 20) {
+    data {
+      id
+      name
+      email
+    }
+    nextCursor
+    hasMore
+  }
+}
+```
+
+**Next page with cursor:**
+```graphql
+{
+  searchUsers(email: "gmail.com", cursor: "123", limit: 20) {
+    data {
+      id
+      name
+      email
+    }
+    nextCursor
+    hasMore
+  }
+}
+```
+
+**Search by name with pagination:**
+```graphql
+{
+  searchUsers(name: "Nguyễn", limit: 10) {
+    data {
+      id
+      name
+      email
+    }
+    nextCursor
+    hasMore
   }
 }
 ```
@@ -380,7 +437,7 @@ curl -X POST http://localhost:3001/graphql \
 curl -X POST http://localhost:3001/graphql \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "{ searchUsers(email: \"gmail.com\") { id name email } }"
+    "query": "{ searchUsers(email: \"gmail.com\") { data { id name email } nextCursor hasMore } }"
   }'
 ```
 
@@ -389,7 +446,7 @@ curl -X POST http://localhost:3001/graphql \
 curl -X POST http://localhost:3001/graphql \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "{ searchUsers(name: \"Nguyễn\") { id name email } }"
+    "query": "{ searchUsers(name: \"Nguyễn\") { data { id name email } nextCursor hasMore } }"
   }'
 ```
 
@@ -398,7 +455,7 @@ curl -X POST http://localhost:3001/graphql \
 curl -X POST http://localhost:3001/graphql \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "{ searchUsers(email: \"gmail\", name: \"John\") { id name email created_at } }"
+    "query": "{ searchUsers(email: \"gmail\", name: \"John\") { data { id name email created_at } nextCursor hasMore } }"
   }'
 ```
 
@@ -407,7 +464,7 @@ curl -X POST http://localhost:3001/graphql \
 curl -X POST http://localhost:3001/graphql \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "query($email: String, $name: String) { searchUsers(email: $email, name: $name) { id name email } }",
+    "query": "query($email: String, $name: String) { searchUsers(email: $email, name: $name) { data { id name email } nextCursor hasMore } }",
     "variables": { "email": "gmail.com", "name": "John" }
   }'
 ```
@@ -439,7 +496,7 @@ curl -X POST http://localhost:3001/graphql \
 curl -X POST http://localhost:3001/graphql \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "mutation { updateUser(id: \"1\", name: \"Nguyễn Văn A - Updated\") { id name email updated_at } }"
+    "query": "mutation { updateUser(id: \"1\", name: \"Lê Văn Chi\") { id name email updated_at } }"
   }'
 ```
 
@@ -497,7 +554,7 @@ curl -X POST http://localhost:3001/graphql \
 curl -X POST http://localhost:3001/graphql \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "{ allUsers: users { id } firstUser: user(id: \"1\") { name email } searchResults: searchUsers(email: \"gmail\") { name } }"
+    "query": "{ allUsers: users { id } firstUser: user(id: \"1\") { name email } searchResults: searchUsers(email: \"gmail\") { data { name } hasMore } }"
   }'
 ```
 

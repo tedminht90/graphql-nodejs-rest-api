@@ -25,6 +25,18 @@ const schema = buildSchema(`
     }
 
     """
+    Kết quả tìm kiếm users với cursor-based pagination
+    - data: Mảng các User objects
+    - nextCursor: ID của user cuối cùng (dùng cho trang tiếp theo)
+    - hasMore: Có còn trang tiếp theo hay không
+    """
+    type SearchUsersResult {
+        data: [User]         # Mảng users tìm được
+        nextCursor: ID       # Cursor cho trang tiếp theo (null nếu hết)
+        hasMore: Boolean     # Có còn dữ liệu hay không
+    }
+
+    """
     QUERY - Định nghĩa các truy vấn đọc dữ liệu (READ operations)
     Các query này không thay đổi dữ liệu, chỉ lấy thông tin
     """
@@ -48,12 +60,14 @@ const schema = buildSchema(`
         users(cursor: ID, limit: Int): [User]
 
         """
-        Tìm kiếm users theo tiêu chí
+        Tìm kiếm users theo tiêu chí với cursor-based pagination
         - email: Tìm theo email (tùy chọn)
-        - name: Tìm theo tên (tùy chọn)
-        - Trả về: Mảng các User objects phù hợp với tiêu chí
+        - name: Tìm theo tên (tùy chọn)  
+        - cursor: ID của user cuối cùng từ lần query trước (để pagination)
+        - limit: Số lượng user tối đa trả về trong một lần
+        - Trả về: Object chứa data, nextCursor và hasMore
         """
-        searchUsers(email: String, name: String): [User]
+        searchUsers(email: String, name: String, cursor: ID, limit: Int): SearchUsersResult
     }
 
     """

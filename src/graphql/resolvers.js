@@ -1,5 +1,6 @@
 // Import model User để thực hiện các thao tác với database
 const User = require('../models/User');
+const pool = require('../config/db');
 
 /**
  * RESOLVERS - Định nghĩa cách thức thực thi các truy vấn và mutation trong GraphQL schema
@@ -23,7 +24,7 @@ const root = {
      */
     hello: () => {
         console.log('Hello resolver được gọi - GraphQL đang hoạt động!');
-        return 'Hello World!';
+        return 'Hello World Updated!';
     },
 
     /**
@@ -58,21 +59,27 @@ const root = {
     },
 
     /**
-     * SearchUsers Resolver - Tìm kiếm users theo tiêu chí
-     * Công dụng: Tìm kiếm users dựa trên email hoặc tên
+     * SearchUsers Resolver - Tìm kiếm users theo tiêu chí với cursor-based pagination
+     * Công dụng: Tìm kiếm users dựa trên email hoặc tên, hỗ trợ phân trang
      * Tham số:
      *   - email: Email cần tìm (tùy chọn)
      *   - name: Tên cần tìm (tùy chọn)
-     * Trả về: Mảng các User objects phù hợp với tiêu chí tìm kiếm
+     *   - cursor: ID của user cuối cùng từ lần query trước (tùy chọn)
+     *   - limit: Số lượng user tối đa trả về (tùy chọn, mặc định 20)
+     * Trả về: Object với data, nextCursor và hasMore
      */
-    searchUsers: async ({ email, name }) => {
+    searchUsers: async ({ email, name, cursor, limit }) => {
         // Tạo object tiêu chí tìm kiếm, chỉ thêm field nào có giá trị
         const criteria = {};
         if (email) criteria.email = email;  // Chỉ thêm email nếu có truyền vào
         if (name) criteria.name = name;     // Chỉ thêm name nếu có truyền vào
         
-        // Gọi method searchUsers từ model với criteria đã build
-        return User.searchUsers(criteria);
+        // Xử lý cursor và limit
+        const parsedCursor = cursor ? parseInt(cursor, 10) : 0;
+        const defaultLimit = limit || 20;  // Mặc định 20 users per page
+        
+        // Gọi method searchUsers từ model với criteria và pagination
+        return User.searchUsers(criteria, parsedCursor, defaultLimit);
     },
 
     // =================== MUTATION RESOLVERS ===================
@@ -101,10 +108,10 @@ const root = {
      * Trả về: User object sau khi được cập nhật
      */
     updateUser: async ({ id, name, email }) => {
-        // Tạo object chứa dữ liệu cần cập nhật, chỉ thêm field nào có giá trị mới
+        // Tạo object chứa dữ liệu cần cập nhật, chỉ thêm field nào được truyền vào  
         const updateData = {};
-        if (name) updateData.name = name;     // Chỉ cập nhật name nếu có truyền vào
-        if (email) updateData.email = email;  // Chỉ cập nhật email nếu có truyền vào
+        if (name !== undefined) updateData.name = name;
+        if (email !== undefined) updateData.email = email;
         
         // Chuyển đổi id sang số nguyên và gọi method updateUser từ model
         return User.updateUser(parseInt(id, 10), updateData);

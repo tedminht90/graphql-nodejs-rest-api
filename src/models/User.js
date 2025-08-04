@@ -4,13 +4,13 @@ const pool = require('../config/db');
 const getUsers = async (cursor = 0, limit = 20) => {
     // Truy vấn các bản ghi có ID lớn hơn cursor
     const query = `
-        SELECT 
-            id, name, email, 
-            created_at AT TIME ZONE 'Asia/Ho_Chi_Minh' as created_at, 
+        SELECT
+            id, name, email,
+            created_at AT TIME ZONE 'Asia/Ho_Chi_Minh' as created_at,
             updated_at AT TIME ZONE 'Asia/Ho_Chi_Minh' as updated_at
-        FROM test_nodejs.users 
-        WHERE id > $1 
-        ORDER BY id ASC 
+        FROM test_nodejs.users
+        WHERE id > $1
+        ORDER BY id ASC
         LIMIT $2
     `;
     
@@ -48,10 +48,21 @@ const createUser = async (user) => {
 };
 
 const updateUser = async (id, user) => {
-    const { name, email } = user;
+    // Get current user data first
+    const currentUser = await getUserById(id);
+    if (!currentUser) {
+        throw new Error('User not found');
+    }
+
+    // Merge current data with update data - only update fields that are provided
+    const updateData = {
+        name: user.name !== undefined ? user.name : currentUser.name,
+        email: user.email !== undefined ? user.email : currentUser.email
+    };
+
     const result = await pool.query(
         'UPDATE test_nodejs.users SET name = $1, email = $2 WHERE id = $3 RETURNING *',
-        [name, email, id]
+        [updateData.name, updateData.email, id]
     );
     return result.rows[0];
 };
@@ -61,21 +72,25 @@ const deleteUser = async (id) => {
     return result.rows[0];
 };
 
-const searchUsers = async (criteria) => {
+const searchUsers = async (criteria, cursor = 0, limit = 20) => {
     let query = `
-        SELECT 
-            id, name, email, 
-            created_at AT TIME ZONE 'Asia/Ho_Chi_Minh' as created_at, 
+        SELECT
+            id, name, email,
+            created_at AT TIME ZONE 'Asia/Ho_Chi_Minh' as created_at,
             updated_at AT TIME ZONE 'Asia/Ho_Chi_Minh' as updated_at
-        FROM test_nodejs.users 
+        FROM test_nodejs.users
     `;
     const conditions = [];
     const values = [];
     let paramIndex = 1;
 
+    // Cursor-based pagination: chỉ lấy records có ID > cursor
+    conditions.push(`id > $${paramIndex++}`);
+    values.push(cursor);
+
     if (criteria.email) {
-        conditions.push(`email = $${paramIndex++}`);
-        values.push(criteria.email);
+        conditions.push(`email ILIKE $${paramIndex++}`);
+        values.push(`%${criteria.email}%`);
     }
 
     if (criteria.name) {
@@ -83,14 +98,22 @@ const searchUsers = async (criteria) => {
         values.push(`%${criteria.name}%`);
     }
 
-    if (conditions.length > 0) {
-        query += ' WHERE ' + conditions.join(' AND ');
-    }
-
+    query += ' WHERE ' + conditions.join(' AND ');
     query += ' ORDER BY id ASC';
+    query += ` LIMIT $${paramIndex++}`;
+    values.push(limit);
 
     const result = await pool.query(query, values);
-    return result.rows;
+    const data = result.rows;
+    
+    // Xác định cursor cho trang tiếp theo
+    const nextCursor = data.length === limit ? data[data.length - 1].id : null;
+
+    return {
+        data,
+        nextCursor,
+        hasMore: data.length === limit
+    };
 };
 
 // Thêm hàm queryUsers
