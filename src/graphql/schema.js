@@ -62,7 +62,7 @@ const schema = buildSchema(`
         """
         Tìm kiếm users theo tiêu chí với cursor-based pagination
         - email: Tìm theo email (tùy chọn)
-        - name: Tìm theo tên (tùy chọn)  
+        - name: Tìm theo tên (tùy chọn)
         - cursor: ID của user cuối cùng từ lần query trước (để pagination)
         - limit: Số lượng user tối đa trả về trong một lần
         - Trả về: Object chứa data, nextCursor và hasMore

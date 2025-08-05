@@ -116,7 +116,7 @@ const searchUsers = async (criteria, cursor = 0, limit = 20) => {
     };
 };
 
-// Thêm hàm queryUsers
+// Thêm hàm queryUsers, hiện tại đã không dùng nữa chuyển sang sử dụng GraphQL
 const queryUsers = async (params) => {
     const { where, select, sort, limit, offset } = params;
 
@@ -141,7 +141,7 @@ const queryUsers = async (params) => {
         Object.keys(where).forEach(field => {
             const operator = Object.keys(where[field])[0];
             const value = where[field][operator];
-            
+
             const operatorMap = {
                 equals: '=',
                 contains: 'ILIKE',

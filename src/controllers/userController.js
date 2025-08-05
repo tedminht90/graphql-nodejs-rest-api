@@ -124,7 +124,7 @@ const searchUsers = async (req, res) => {
     }
 };
 
-// Triển khai hàm queryUsers
+// Triển khai hàm queryUsers hiện tại đã không dùng nữa chuyển sang sử dụng GraphQL
 const queryUsers = async (req, res) => {
     try {
         const params = req.body;

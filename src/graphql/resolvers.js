@@ -42,7 +42,7 @@ const root = {
     /**
      * Users Resolver - Lấy danh sách users với phân trang
      * Công dụng: Truy xuất danh sách users, hỗ trợ cursor-based pagination
-     * Tham số: 
+     * Tham số:
      *   - cursor: ID của user cuối cùng từ lần truy vấn trước (để pagination)
      *   - limit: Số lượng user tối đa trả về trong một lần
      * Trả về: Mảng các User objects
@@ -50,10 +50,10 @@ const root = {
     users: async ({ cursor, limit }) => {
         // Xử lý cursor: nếu có cursor thì chuyển sang số, không thì mặc định là 0
         const parsedCursor = cursor ? parseInt(cursor, 10) : 0;
-        
+
         // Gọi method getUsers từ model, trả về object có cấu trúc { data: [...], hasMore: boolean }
         const result = await User.getUsers(parsedCursor, limit);
-        
+
         // GraphQL chỉ cần mảng dữ liệu, không cần metadata khác
         return result.data;
     },
