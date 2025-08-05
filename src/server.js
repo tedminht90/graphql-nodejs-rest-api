@@ -1,8 +1,11 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
+//const bodyParser = require('body-parser');
 const { graphql } = require('graphql');
 const { ruruHTML } = require('ruru/server');
+const morgan = require('morgan');
 
 // Import GraphQL
 const graphqlSchema = require('./graphql/schema');
@@ -25,6 +28,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(morgan('dev'));
 
 // THÊM GRAPHQL ENDPOINT
 // Xử lý yêu cầu GET để hiển thị giao diện GraphiQL

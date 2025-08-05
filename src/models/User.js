@@ -1,4 +1,11 @@
+const { z } = require('zod');
 const pool = require('../config/db');
+
+// Schema để validate dữ liệu cập nhật user
+const userUpdateSchema = z.object({
+    name: z.string().min(1, { message: "Name cannot be empty" }).optional(),
+    email: z.string().email({ message: "Invalid email format" }).optional(),
+}).strict(); // strict() để đảm bảo không có trường lạ được đưa vào
 
 // Chuyển sang Cursor-based Pagination
 const getUsers = async (cursor = 0, limit = 20) => {
@@ -27,11 +34,10 @@ const getUsers = async (cursor = 0, limit = 20) => {
 };
 
 const getUserById = async (id) => {
-    console.log('getUserById called with id:', id);
+    console.log(`[models/User.js] getUserById called with id: ${id}`);
     const client = await pool.connect();
     try {
         const result = await client.query('SELECT * FROM test_nodejs.users WHERE id = $1', [id]);
-        console.log('Query result:', result.rows[0]);
         return result.rows[0];
     } finally {
         client.release();
@@ -48,13 +54,22 @@ const createUser = async (user) => {
 };
 
 const updateUser = async (id, user) => {
-    // Get current user data first
+    console.log(`[models/User.js] updateUser called for id: ${id} with data:`, user);
+
+    // 1. Validate input data
+    const validationResult = userUpdateSchema.safeParse(user);
+    if (!validationResult.success) {
+        // Ném lỗi với thông điệp từ Zod
+        throw new Error(`Invalid input: ${validationResult.error.issues.map(e => e.message).join(', ')}`);
+    }
+
+    // 2. Get current user data first
     const currentUser = await getUserById(id);
     if (!currentUser) {
         throw new Error('User not found');
     }
 
-    // Merge current data with update data - only update fields that are provided
+    // 3. Merge current data with update data - only update fields that are provided
     const updateData = {
         name: user.name !== undefined ? user.name : currentUser.name,
         email: user.email !== undefined ? user.email : currentUser.email
